@@ -18,24 +18,24 @@ function registrar(req, res) {
         user.rol = 'ROL_USARIO';
    
         User.find({$or: [
-            {email: user.email.toLowerCase()},
-            {nick: user.nick.toLowerCase()}
+            {email: user.email},
+            {nick: user.nick}
         ]}).exec((err, users)=>{
-            if(err) return res.status(500).send({message: 'Error en la peticion de usuario'})
+            if(err) return res.status(500).send({message: 'Error en la petición.'})
             
             if(users && users.length >= 1){
-                return res.status(500).send({message: 'el usuario ya existe'});
+                return res.status(500).send({message: 'Escribe un email y/o nick diferente.'});
             }else{
                 bcrypt.hash(params.password, null, null, (err, hash)=>{
                     user.password = hash;
 
                     user.save((err, userGuardado)=>{
-                        if(err) return res.status(500).send({message: 'Error a la hora de guardar el usuario'}) 
+                        if(err) return res.status(500).send({message: 'Error al guardar el usuario.'}) 
                         
                         if(userGuardado){
                             res.status(200).send({user: userGuardado})
                         }else{
-                            res.status(404).send({message: 'no se a podido registrar al usuario'})
+                            res.status(404).send({message: 'No se a podido registrar al usuario.'})
                         }
                     })
                 })
@@ -43,11 +43,11 @@ function registrar(req, res) {
         })
     }else{
         res.status(200).send({
-            message: 'rellene los datos necesarios'
+            message: 'Faltan datos necesarios'
         })
     }
 }
-
+/*
 function login(req, res) {
     var params = req.body;
     var email = params.email;
@@ -79,8 +79,33 @@ function login(req, res) {
 
     
 
-}
+}*/
+function login(req, res) {
+    var params = req.body;
+    var email = params.email;
+    var password = params.password;
 
+    if(email && password){
+        User.findOne({email: email}, (err, user)=>{
+            if(err) return res.status(200).send({message: 'Error en la petición.'})
+            
+            if (user) {
+                bcrypt.compare(password, user.password, (err, check)=>{
+                    if (check) {
+                        res.status(200).send({token: jwt.createToken(user), user: user});
+                    }else{
+                        return res.status(200).send({message: 'Contraseña incorrecta, vuelve a intentarlo.'})
+                    }   
+                })
+            }else{
+                return res.status(200).send({message: 'El usuario no existe.'})
+            }
+        
+        });
+    }else{
+        res.status(200).send({message: 'Debes completar los campos.'})
+    }
+}
 
 function editarUsuario(req, res) {
     var userId = req.params.id;
@@ -90,13 +115,13 @@ function editarUsuario(req, res) {
     delete params.password;
 
     if(userId != req.user.sub){
-        return res.status(500).send({message: 'no tiene los permisos para editar este usuario'});
+        return res.status(500).send({message: 'No tiene los permisos para editar este usuario.'});
     }
 
     User.findByIdAndUpdate(userId , params, {new:true},(err, usuarioActualizado)=>{
-        if(err) return res.status(500).send({message: 'error en la peticion'});
+        if(err) return res.status(500).send({message: 'Error en la petición.'});
 
-        if(!usuarioActualizado) return res.status(404).send({message: 'no se a podido actualizar al usuario'});
+        if(!usuarioActualizado) return res.status(404).send({message: 'No se ha podido actualizar al usuario.'});
 
         return res.status(200).send({user: usuarioActualizado});
     })
@@ -104,7 +129,6 @@ function editarUsuario(req, res) {
 
 
 module.exports = {
-    ejemplo,
     registrar,
     login,
     editarUsuario

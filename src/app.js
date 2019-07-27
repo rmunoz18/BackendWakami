@@ -4,6 +4,9 @@ const express = require("express");
 const app = express();
 const bodyparser = require("body-parser");
 
+//CARGAR RUTAS
+var user_routes = require('./routes/userRoutes');
+
 //MIDDELWARES
 app.use(bodyparser.urlencoded({ extended: false}));
 app.use(bodyparser.json());
@@ -18,6 +21,8 @@ app.use((req, res, next) =>{
     next();
 });
 
+//RUTAS
+app.use('/api', user_routes);
 
 //EXPORTAR
 module.exports = app;
